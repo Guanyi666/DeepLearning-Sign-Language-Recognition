@@ -210,8 +210,8 @@ class HandFeatureExtractor:
 # ----------------------------
 # 使用示例
 # ----------------------------
-video_file = "../../data/raw/video/repeat_he_06.mp4"
-output_folder = "../../data/dataset/train/he/06"
+video_file = "../../data/raw/morning/morning_02.mp4"
+output_folder = "../../data/dataset/train/morning/02"
 os.makedirs(output_folder, exist_ok=True)
 
 extractor = HandFeatureExtractor()
@@ -276,7 +276,7 @@ def extract_action_features(video_path, boundaries, output_dir, fixed_frame_coun
         all_action_features.append(features)
 
         # 保存每个动作
-        save_path = os.path.join(output_dir, f"he_{idx+1}_features.npy")
+        save_path = os.path.join(output_dir, f"morning_{idx+1}_features.npy")
         np.save(save_path, features)
         print(f"动作 {idx+1} 特征 shape: {features.shape}, 保存到: {save_path}")
 
