@@ -68,7 +68,7 @@ class HandFeatureExtractor:
 
     def detect_action_boundaries_repeat(self, trajectory,
                                             min_action_len=5,
-                                            max_pause_len=20):
+                                            max_pause_len=27):
         """
         允许动作中有短暂停留，避免将一个动作拆成多个
         """
@@ -210,8 +210,8 @@ class HandFeatureExtractor:
 # ----------------------------
 # 使用示例
 # ----------------------------
-video_file = "../../data/raw/video/repeat_action_you_01.mp4"
-output_folder = "../../data/processed/video/repeat_video_01"
+video_file = "../../data/raw/video/repeat_he_06.mp4"
+output_folder = "../../data/dataset/train/he/06"
 os.makedirs(output_folder, exist_ok=True)
 
 extractor = HandFeatureExtractor()
@@ -276,7 +276,7 @@ def extract_action_features(video_path, boundaries, output_dir, fixed_frame_coun
         all_action_features.append(features)
 
         # 保存每个动作
-        save_path = os.path.join(output_dir, f"action_{idx+1}_features.npy")
+        save_path = os.path.join(output_dir, f"he_{idx+1}_features.npy")
         np.save(save_path, features)
         print(f"动作 {idx+1} 特征 shape: {features.shape}, 保存到: {save_path}")
 
