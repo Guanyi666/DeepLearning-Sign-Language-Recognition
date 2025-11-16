@@ -3,7 +3,7 @@ import numpy as np
 import mediapipe as mp
 
 
-class HandFeatureExtractor:
+class SingleHandFeatureExtractor:
     def __init__(self):
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils

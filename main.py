@@ -1,4 +1,4 @@
-from src.process_video import process_video
+from src.process_video.process_video import process_video
 import numpy as np
 
 input_video = "./data/raw/video/hand_video_test_01.mp4"
