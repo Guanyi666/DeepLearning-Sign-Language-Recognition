@@ -18,7 +18,7 @@ from tensorflow.keras.callbacks import EarlyStopping      # <--- [FIX 2] 早停
 
 # --- 第 1 步：扫描数据文件 ---
 # ！！！确保这个路径指向你正确的 'train' 文件夹！！！
-DATA_DIR = Path(r"D:\code\deeplearning\project\DeepLearning-Sign-Language-Recognition\data\dataset\train")
+DATA_DIR = Path(r"data\dataset\train")
 
 print("开始扫描数据文件...")
 
