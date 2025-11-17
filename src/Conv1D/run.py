@@ -7,6 +7,13 @@ from sklearn.model_selection import train_test_split
 import time
 import os
 
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
+# 指定中文字体（Windows系统常用“SimHei”或“Microsoft YaHei”）
+rcParams['font.sans-serif'] = ['SimHei']  # 用黑体显示中文
+rcParams['axes.unicode_minus'] = False    # 解决负号显示问题
+
 # 导入评估工具
 from sklearn.metrics import classification_report, confusion_matrix
 import seaborn as sns
@@ -18,7 +25,7 @@ from tensorflow.keras.callbacks import EarlyStopping      # <--- [FIX 2] 早停
 
 # --- 第 1 步：扫描数据文件 ---
 # ！！！确保这个路径指向你正确的 'train' 文件夹！！！
-DATA_DIR = Path(r"data\dataset\train")
+DATA_DIR = Path(r"../../data/dataset/train")
 
 print("开始扫描数据文件...")
 
@@ -156,7 +163,7 @@ model.summary()
 
 # --- 第 6 步：[修改] 编译模型并设置回调 ---
 
-EPOCHS = 200 # 保持 epochs 足够高，让早停来决定
+EPOCHS = 500 # 保持 epochs 足够高，让早停来决定
 # [调参] 降低学习率，让模型学得更慢、更精细
 LEARNING_RATE = 0.00003
 
@@ -193,7 +200,7 @@ print(f"--- 训练完成 --- (总耗时: {end_time - start_time:.2f} 秒)")
 
 # [修改] 保存 v3 模型
 # 使用 r"..." (raw string) 来确保 Windows 路径正确处理
-save_path = r"D:\code\deeplearning\project\DeepLearning-Sign-Language-Recognition\src\Conv1D\sign_language_model_v3_tuned.h5"
+save_path = r"./sign_language_model_v3_tuned.h5"
 model.save(save_path)
 print(f"模型已保存为 '{save_path}'")
 
