@@ -1,0 +1,129 @@
+F:\zhuomioan\deepLearning\.venv\Scripts\python.exe F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\check_dataset.py
+===============================================
+ 数据集检查脚本启动
+ 项目根目录: F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data
+ 数据集目录: F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset
+===============================================
+✔ 找到 train 目录: F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train
+
+-----------------------------------------------
+ 目录结构扫描：
+-----------------------------------------------
+📁 发现词目录: good
+📁 发现词目录: he
+📁 发现词目录: morning
+📁 发现词目录: thank_you
+📁 发现词目录: very
+📁 发现词目录: you
+
+⚠ 建议 WORD_TO_ID 使用以下 key：
+['good', 'he', 'morning', 'thank_you', 'very', 'you']
+
+-----------------------------------------------
+
+==============================
+📌 词汇: good
+==============================
+ 子文件夹数量: 4 → ['01', '02', '03', '04']
+ 特征文件数量: 49
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_6_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\good\01\good_7_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+==============================
+📌 词汇: he
+==============================
+ 子文件夹数量: 6 → ['01', '02', '03', '04', '05', '06']
+ 特征文件数量: 88
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_6_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\he\01\he_7_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+==============================
+📌 词汇: morning
+==============================
+ 子文件夹数量: 4 → ['01', '02', '03', '04']
+ 特征文件数量: 48
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_13_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\morning\01\morning_6_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+==============================
+📌 词汇: thank_you
+==============================
+ 子文件夹数量: 3 → ['01', '03', '04']
+ 特征文件数量: 36
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_6_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\thank_you\01\thank_you_7_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+==============================
+📌 词汇: very
+==============================
+ 子文件夹数量: 4 → ['01', '02', '03', '04']
+ 特征文件数量: 49
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_6_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\very\01\very_7_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+==============================
+📌 词汇: you
+==============================
+ 子文件夹数量: 4 → ['01', '02', '03', '04']
+ 特征文件数量: 48
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_10_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_11_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_12_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_1_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_2_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_3_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_4_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_5_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_6_features.npy
+ - F:\zhuomioan\DeepLearning_projectHub\deep\DeepLearning-Sign-Language-Recognition\DeepLearning-Sign-Language-Recognition\data\dataset\train\you\01\you_7_features.npy
+ ✔ 全部特征 shape 正确 (30,126)
+
+===============================================
+ 数据集扫描完成，请将以上完整输出粘贴发送给我
+ 我将基于你的目录自动生成完整修复后的项目结构。
+===============================================

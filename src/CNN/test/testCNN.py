@@ -24,8 +24,8 @@ ID_TO_WORD = {
     0: "none",
     1: "good",
     2: "he",
-    3: "moring",
-    4: "thankyou",
+    3: "morning",
+    4: "thank_you",
     5: "very",
     6: "you"
 }

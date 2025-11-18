@@ -8,8 +8,8 @@ DATA_ROOT = "../../data/dataset"
 WORD_TO_ID = {
     "good": 1,
     "he": 2,
-    "moring": 3,
-    "thankyou": 4,
+    "morning": 3,
+    "thank_you": 4,
     "very": 5,
     "you": 6
 }
