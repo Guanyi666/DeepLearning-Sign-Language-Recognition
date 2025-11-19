@@ -33,7 +33,7 @@ class SignTranslator:
 
         self.word_buffer = []  # 存储当前的单词序列
         self.last_update_time = 0
-        self.TIMEOUT = 2.5  # 如果 2.5 秒没有新词，就自动提交翻译
+        self.TIMEOUT = 5  # 如果 2.5 秒没有新词，就自动提交翻译
 
     def add_word(self, word):
         """

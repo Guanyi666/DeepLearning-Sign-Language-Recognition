@@ -14,7 +14,7 @@ from nlg_processor import NLGProcessor  # 导入刚才新建的模块
 
 # 1. 路径设置
 current_dir = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(current_dir, '..', 'Conv1D', 'sign_language_model_dual (1).h5')
+MODEL_PATH = os.path.join(current_dir, '..', 'Conv1D', 'sign_language_model_final.h5')
 
 # 2. 动作标签 (请确保顺序与 run.py 输出完全一致)
 actions = ['good', 'he', 'morning', 'thank_you', 'very', 'you']
@@ -118,10 +118,19 @@ def extract_key_frame_numpy(data):
 
 
 # 状态变量
-sequence = []  # 存储最近30帧特征
-predictions_queue = []  # 存储最近几帧的预测结果(用于投票)
-sentence = []  # 最终显示的句子
-last_action_time = 0  # 上次动作触发的时间戳
+# ... 初始化变量区域 ...
+sequence = []
+predictions_queue = []
+sentence = []
+last_action_time = 0
+
+# [新增] 用于记录手消失了多少帧
+no_hand_frames_count = 0
+
+cap = cv2.VideoCapture(0)
+# ...
+
+
 
 # ...
 translator = SignTranslator() # (可选：如果你只用NLG，这个旧翻译器甚至可以删了)
@@ -135,6 +144,8 @@ with mp_hands.Hands(
         model_complexity=0,  # [优化] 0=Lite模型(最快), 1=Full
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as hands:
+
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret: break
@@ -150,6 +161,31 @@ with mp_hands.Hands(
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+        # =========================================================
+        # [新增/修改] 缓冲区自动重置逻辑
+        # =========================================================
+        if results.multi_hand_landmarks:
+            # 如果检测到了手
+
+            # 检查：如果之前手已经消失很久了(比如超过10帧)，说明这是一次“新的进场”
+            if no_hand_frames_count > 10:
+                sequence = []  # 清空特征历史
+                predictions_queue = []  # 清空投票历史
+                print(">>> 手部重置：检测到新动作输入，已清空缓存")
+
+            # 重置消失计数器，因为现在有手了
+            no_hand_frames_count = 0
+
+        else:
+            # 如果没检测到手，计数器 +1
+            no_hand_frames_count += 1
+
+            # 可选：如果手一直不在，保持 sequence 为空，防止残留
+            if no_hand_frames_count > 10:
+                sequence = []
+                predictions_queue = []
+
 
         # =========================================================
         # Core: 核心识别逻辑 (只有检测到手时才运行)
