@@ -10,7 +10,7 @@ from collections import Counter
 
 # 1. 路径设置
 current_dir = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(current_dir, '..', 'Conv1D', 'sign_language_model_dual.h5')
+MODEL_PATH = os.path.join(current_dir, '..', 'Conv1D', 'sign_language_model_dual (1).h5')
 
 # 2. 动作标签 (请确保顺序与 run.py 输出完全一致)
 actions = ['good', 'he', 'morning', 'thank_you', 'very', 'you']
