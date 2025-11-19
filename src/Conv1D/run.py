@@ -3,8 +3,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
 from pathlib import Path
-from sklearn.model_selection import train_test_split
-import time
 import os
 
 # 绘图与评估工具
@@ -15,163 +13,242 @@ import seaborn as sns
 
 # 核心调参工具
 from sklearn.utils.class_weight import compute_class_weight
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
-# --- 全局绘图设置 ---
-# 指定中文字体（Windows系统常用“SimHei”或“Microsoft YaHei”）
-rcParams['font.sans-serif'] = ['SimHei']  # 用黑体显示中文
-rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+# --- 全局环境设置 ---
+# 设置中文字体以正确显示绘图标签
+rcParams['font.sans-serif'] = ['SimHei']
+rcParams['axes.unicode_minus'] = False
 
 # ==========================================
-# 1. 数据准备与预处理
+# 1. 配置与数据索引 (Configuration & Indexing)
 # ==========================================
 
-# ！！！确保这个路径指向你正确的 'train' 文件夹！！！
-DATA_DIR = Path(r"../../data/dataset/train")
+# 数据集路径
+DATA_DIR = Path(r"../../data/dataset/train_aug")
 
-print("开始扫描数据文件...")
+# 留一验证策略 (Leave-One-Subject-Out Validation)
+# 目的：评估模型的泛化能力。模型在从未见过的 '04' 号采集者数据上进行测试，
+# 防止模型死记硬背特定人的动作习惯。
+VALIDATION_SUBJECTS = ['04']
 
-all_filepaths = []
-all_labels = []
-class_to_idx = {}
-idx_to_class = {}
-current_idx = 0
-
-# 遍历所有类别文件夹
-for class_dir in DATA_DIR.iterdir():
-    if class_dir.is_dir():
-        class_name = class_dir.name
-        if class_name not in class_to_idx:
-            class_to_idx[class_name] = current_idx
-            idx_to_class[current_idx] = class_name
-            current_idx += 1
-
-        class_idx = class_to_idx[class_name]
-        for subject_dir in class_dir.iterdir():
-            if subject_dir.is_dir():
-                for npy_file in subject_dir.glob("*.npy"):
-                    all_filepaths.append(str(npy_file))
-                    all_labels.append(class_idx)
-
-print(f"扫描完成！总共找到 {len(all_filepaths)} 个特征文件。")
-NUM_CLASSES = len(class_to_idx)
-print(f"共 {NUM_CLASSES} 个类别: {list(class_to_idx.keys())}")
-class_names = [idx_to_class[i] for i in range(NUM_CLASSES)]
-
-# --- [调参核心 1] 数据集划分策略 ---
-# 这里的 stratify=all_labels 非常重要。
-# 如果不加这一项，随机切分可能导致验证集中某些稀有类别的样本为0。
-# stratify 保证训练集和验证集中各类别的比例是一致的。
-train_paths, val_paths, train_labels, val_labels = train_test_split(
-    all_filepaths,
-    all_labels,
-    test_size=0.2,
-    random_state=42,
-    stratify=all_labels
-)
-print(f"训练集样本数: {len(train_paths)}")
-print(f"验证集样本数: {len(val_paths)}")
-
-# --- [调参核心 2] 类别权重 (Class Weights) ---
-# 目的：解决 "Thank you" 样本多、"Morning" 样本少导致的预测偏见。
-# 原理：算出每个类别的“稀缺度”。样本越少，权重越大。
-# 效果：模型如果预测错了一个稀缺样本，Loss惩罚会比预测错一个常见样本大得多。
-print("\n--- 正在计算类别权重 ---")
-unique_labels = np.unique(train_labels)
-class_weights = compute_class_weight(
-    'balanced',
-    classes=unique_labels,
-    y=train_labels
-)
-class_weight_dict = dict(zip(unique_labels, class_weights))
-print("类别权重字典 (样本少的类权重高):", class_weight_dict)
-
-# --- 构建 tf.data 数据管道 ---
+# 超参数配置 (Hyperparameters)
+# BATCH_SIZE: 64。权衡内存占用与梯度下降的随机性。
+# SEQ_LENGTH: 30。输入的时间步长，对应约1秒的视频数据。
+# INPUT_FEATURES: 126。每帧特征维度 (21点 * 2只手 * 3维坐标)。
 BATCH_SIZE = 64
 SEQ_LENGTH = 30
 INPUT_FEATURES = 126
-INPUT_SHAPE = (SEQ_LENGTH, INPUT_FEATURES)
+
+print(f"--- 系统初始化 ---")
+print(f"数据源: {DATA_DIR}")
+print(f"验证集策略: 使用 {VALIDATION_SUBJECTS} 作为验证集，其余作为训练集。")
+
+train_paths = []
+train_labels = []
+val_paths = []
+val_labels = []
+
+class_to_idx = {}
+idx_to_class = {}
+current_idx = 0
+stats = {}
+
+if not DATA_DIR.exists():
+    raise FileNotFoundError(f"错误：找不到数据目录 {DATA_DIR}")
+
+# --- 数据扫描与元数据构建 ---
+for class_dir in sorted(DATA_DIR.iterdir()):
+    if class_dir.is_dir():
+        cname = class_dir.name
+        if cname not in class_to_idx:
+            class_to_idx[cname] = current_idx
+            idx_to_class[current_idx] = cname
+            current_idx += 1
+            stats[cname] = {'train': 0, 'val': 0}
+
+        cidx = class_to_idx[cname]
+        for subject_dir in class_dir.iterdir():
+            if subject_dir.is_dir():
+                # 判定当前文件夹属于训练集还是验证集
+                is_val = subject_dir.name in VALIDATION_SUBJECTS
+                for f in subject_dir.glob("*.npy"):
+                    if is_val:
+                        val_paths.append(str(f))
+                        val_labels.append(cidx)
+                        stats[cname]['val'] += 1
+                    else:
+                        train_paths.append(str(f))
+                        train_labels.append(cidx)
+                        stats[cname]['train'] += 1
+
+print(f"\n数据集统计:")
+print(f"训练样本数: {len(train_paths)}")
+print(f"验证样本数: {len(val_paths)}")
+NUM_CLASSES = len(class_to_idx)
+class_names = [idx_to_class[i] for i in range(NUM_CLASSES)]
+
+# --- 类别不平衡处理 (Class Imbalance Handling) ---
+# 计算类别权重，赋予稀有类别更高的Loss惩罚，防止模型偏向多数类。
+train_labels_np = np.array(train_labels)
+val_labels_np = np.array(val_labels)
+unique_labels = np.unique(train_labels_np)
+class_weights = compute_class_weight('balanced', classes=unique_labels, y=train_labels_np)
+class_weight_dict = dict(zip(unique_labels, class_weights))
+print(f"类别权重计算完成: {class_weight_dict}")
 
 
-def load_npy_file(path, label):
-    def _loader(path):
-        data = np.load(path.numpy().decode('utf-8')).astype(np.float32)
-        return data
+# ==========================================
+# 2. 特征工程管道 (Feature Engineering Pipeline)
+# ==========================================
 
-    data = tf.py_function(_loader, [path], tf.float32)
-    data.set_shape(INPUT_SHAPE)
+def extract_key_frame(data):
+    """
+    关键帧提取算法 (Key Frame Extraction Strategy)
+
+    原理：
+        通过计算帧间的欧氏距离（速度），寻找动作最“稳定”的时刻。
+        通常在手语动作的定格点（Hold Phase），手势形状最清晰，
+        且受运动模糊影响最小。
+
+    Args:
+        data: Tensor (30, 126) - 原始序列数据
+
+    Returns:
+        key_frame: Tensor (126,) - 提取出的静态特征向量
+    """
+    # 1. 计算差分 (即速度 Velocity): v[t] = x[t+1] - x[t]
+    diff = data[1:] - data[:-1]
+
+    # 2. 计算 L2 范数: 将多维特征的变化合并为一个标量速度
+    velocity = tf.norm(diff, axis=1)
+
+    # 3. 启发式搜索窗口 (Heuristic Search Window)
+    # 忽略动作的起始（起手）和结束（放下）阶段，专注于中间 50% 的核心动作区
+    start = SEQ_LENGTH // 4
+    end = SEQ_LENGTH * 3 // 4
+
+    # 4. 寻找局部极小值 (Argmin)
+    min_idx_local = tf.argmin(velocity[start:end])
+    min_idx_global = min_idx_local + start
+
+    key_frame = data[min_idx_global]
+    return key_frame
+
+
+def load_dual_input(path, label):
+    """
+    TF.Data 数据加载器
+    负责将文件路径转换为模型所需的双输入格式。
+    """
+
+    def _loader(p):
+        # 物理加载 .npy 文件
+        d = np.load(p.numpy().decode('utf-8')).astype(np.float32)
+        return d
+
+    # 1. 加载原始时序数据
+    seq_data = tf.py_function(_loader, [path], tf.float32)
+    seq_data.set_shape((SEQ_LENGTH, INPUT_FEATURES))
+
+    # 2. 在线计算静态关键帧 (On-the-fly processing)
+    static_data = extract_key_frame(seq_data)
+    static_data.set_shape((INPUT_FEATURES,))
+
     label = tf.cast(label, tf.int64)
-    return data, label
+
+    # 3. 构造双输入字典 (Dual-Input Dictionary)
+    # 键名 'seq_input' 和 'static_input' 必须与模型 Input 层的 name 一致
+    return {'seq_input': seq_data, 'static_input': static_data}, label
 
 
+# --- 构建高性能数据管道 (Data Pipeline Construction) ---
+# AUTOTUNE: 让 TensorFlow 自动根据 CPU 核心数调整并行程度
 train_ds = tf.data.Dataset.from_tensor_slices((train_paths, train_labels))
-train_ds = train_ds.shuffle(buffer_size=len(train_paths))
-train_ds = train_ds.map(load_npy_file, num_parallel_calls=tf.data.AUTOTUNE)
-train_ds = train_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+train_ds = train_ds.shuffle(len(train_paths)) \
+    .map(load_dual_input, num_parallel_calls=tf.data.AUTOTUNE) \
+    .batch(BATCH_SIZE) \
+    .prefetch(tf.data.AUTOTUNE)
 
 val_ds = tf.data.Dataset.from_tensor_slices((val_paths, val_labels))
-val_ds = val_ds.map(load_npy_file, num_parallel_calls=tf.data.AUTOTUNE)
-val_ds = val_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+val_ds = val_ds.map(load_dual_input, num_parallel_calls=tf.data.AUTOTUNE) \
+    .batch(BATCH_SIZE) \
+    .prefetch(tf.data.AUTOTUNE)
 
 
 # ==========================================
-# 2. 模型架构设计 (调参重点)
+# 3. 双流网络架构搭建 (Model Architecture)
 # ==========================================
 
-def create_DEEPER_cnn_lstm_model(input_shape, num_classes):
+def create_dual_stream_model(input_shape_seq, input_shape_static, num_classes):
     """
-    [调参核心 3] 深层网络架构设计
-    - 为什么用 Conv1D? 用于提取单帧内的手部空间特征（如手指弯曲程度）。
-    - 为什么加深层数? 3层卷积能提取从简单到抽象的高级特征。
-    - 为什么用 Bidirectional LSTM? 手语是连贯动作，双向LSTM能同时利用“过去”和“未来”的信息。
-    - 为什么 Dropout 高达 0.4/0.5? 强力抑制过拟合，强迫模型不依赖单一特征。
+    搭建 Two-Stream CNN-LSTM 融合网络
     """
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),  # (30, 126)
+    # ---------------------------------------------------------
+    # Branch A: 动态流 (Dynamic Stream)
+    # 目的：提取时空特征 (Spatio-Temporal Features)
+    # ---------------------------------------------------------
+    input_seq = layers.Input(shape=input_shape_seq, name='seq_input')
 
-        # --- 特征提取部分 (Spatial Feature Extraction) ---
-        layers.Conv1D(filters=64, kernel_size=3, padding='same', activation='relu'),
-        layers.BatchNormalization(),  # 加速收敛，防止梯度消失
+    # Feature Extraction (CNN): 提取局部短时特征
+    x = layers.Conv1D(64, 3, padding='same', activation='relu')(input_seq)
+    x = layers.BatchNormalization()(x)  # 抑制梯度消失，加速收敛
+    x = layers.MaxPooling1D(2)(x)  # 降维，保留显著特征
 
-        layers.Conv1D(filters=64, kernel_size=3, padding='same', activation='relu'),
-        layers.BatchNormalization(),
-        layers.MaxPooling1D(pool_size=2),
+    x = layers.Conv1D(128, 3, padding='same', activation='relu')(x)
+    x = layers.BatchNormalization()(x)
 
-        layers.Conv1D(filters=128, kernel_size=3, padding='same', activation='relu'),
-        layers.BatchNormalization(),
-        layers.MaxPooling1D(pool_size=2),
+    # Sequence Modeling (Bi-LSTM): 提取长时依赖
+    # Bidirectional 允许模型同时利用过去和未来的信息
+    # return_sequences=False: 只输出序列最后的状态，作为整个序列的摘要
+    x = layers.Bidirectional(layers.LSTM(128, return_sequences=False))(x)
+    x = layers.Dropout(0.4)(x)  # 正则化，防止过拟合
 
-        layers.Conv1D(filters=256, kernel_size=3, padding='same', activation='relu'),
-        layers.BatchNormalization(),
+    dynamic_features = layers.Dense(64, activation='relu')(x)
 
-        # --- 时序学习部分 (Temporal Sequence Learning) ---
-        layers.Bidirectional(layers.LSTM(128, return_sequences=True)),
-        layers.Dropout(0.4),  # 丢弃 40% 神经元
+    # ---------------------------------------------------------
+    # Branch B: 静态流 (Static Stream)
+    # 目的：提取纯空间手型特征 (Spatial Pose Features)
+    # ---------------------------------------------------------
+    input_static = layers.Input(shape=input_shape_static, name='static_input')
 
-        layers.Bidirectional(layers.LSTM(128)),
-        layers.Dropout(0.4),
+    # Pose Encoding (MLP): 将坐标映射到高维语义空间
+    y = layers.Dense(128, activation='relu')(input_static)
+    y = layers.BatchNormalization()(y)
+    y = layers.Dropout(0.3)(y)
 
-        # --- 分类头 ---
-        layers.Dense(256, activation='relu'),
-        layers.Dropout(0.5),  # 全连接层通常需要更高的 Dropout
+    y = layers.Dense(64, activation='relu')(y)
+    y = layers.BatchNormalization()(y)
 
-        layers.Dense(num_classes, activation='softmax')
-    ])
+    static_features = layers.Dense(64, activation='relu')(y)
+
+    # ---------------------------------------------------------
+    # Fusion & Classification (融合与分类)
+    # ---------------------------------------------------------
+    # Feature Fusion: 拼接动态和静态特征向量
+    combined = layers.concatenate([dynamic_features, static_features])
+
+    # Classification Head
+    z = layers.Dense(128, activation='relu')(combined)
+    z = layers.Dropout(0.5)(z)  # High Dropout due to small dataset size
+    output = layers.Dense(num_classes, activation='softmax')(z)
+
+    model = keras.Model(inputs=[input_seq, input_static], outputs=output, name="TwoStream_SignNet")
     return model
 
 
-model = create_DEEPER_cnn_lstm_model(input_shape=INPUT_SHAPE, num_classes=NUM_CLASSES)
+# 实例化并打印模型概况
+model = create_dual_stream_model((SEQ_LENGTH, INPUT_FEATURES), (INPUT_FEATURES,), NUM_CLASSES)
 model.summary()
 
 # ==========================================
-# 3. 编译与训练配置 (调参重点)
+# 4. 训练与回调策略 (Training & Callbacks)
 # ==========================================
 
 EPOCHS = 500
-# [调参核心 4] 学习率 (Learning Rate)
-# 默认是 0.001。我们降到 0.00003 (3e-5)。
-# 原因：复杂模型 + 少量数据 = 容易震荡。低学习率让模型“步步为营”，虽然慢，但能找到更好的最优解。
-LEARNING_RATE = 0.00003
+# 学习率设置 (0.0001): 较小的学习率有助于在复杂的多模态损失面上找到更优的极小值，
+# 虽然收敛较慢，但能减少震荡。
+LEARNING_RATE = 0.0001
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
@@ -179,130 +256,78 @@ model.compile(
     metrics=['accuracy']
 )
 
-# [调参核心 5] 早停机制 (Early Stopping)
-# 原因：我们设置了 500 epoch，但模型可能在 100 epoch 就过拟合了（训练集准，验证集降）。
-# 策略：如果验证集 Loss 在 50 个 epoch 内都不再下降，就强行停止，并回滚到最好的那一版参数。
-early_stopping_cb = EarlyStopping(
-    monitor='val_loss',
-    patience=50,  # 容忍度：允许 50 次尝试而不进步
-    restore_best_weights=True,  # 关键：恢复到最佳模型，而不是最后一次的模型
-    verbose=1
-)
+callbacks_list = [
+    # 早停机制: 防止过拟合。如果验证集 Loss 在 40 轮内没有下降，则停止。
+    # restore_best_weights=True 确保模型回滚到性能最好的状态，而不是最后的状态。
+    EarlyStopping(monitor='val_loss', patience=40, restore_best_weights=True, verbose=1),
 
-print("\n--- 开始训练 (已加入 Class Weights 和 EarlyStopping) ---")
-start_time = time.time()
+    # 模型检查点: 始终保存验证集 Loss 最低的模型版本。
+    ModelCheckpoint("./sign_language_model_dual.h5", monitor='val_loss', save_best_only=True, verbose=0)
+]
 
+print("\n--- 开始训练 (Training Phase) ---")
 history = model.fit(
     train_ds,
     epochs=EPOCHS,
     validation_data=val_ds,
-    class_weight=class_weight_dict,  # 应用类别权重
-    callbacks=[early_stopping_cb]  # 应用早停
+    class_weight=class_weight_dict,  # 应用类别权重，解决样本不平衡
+    callbacks=callbacks_list
 )
 
-end_time = time.time()
-print(f"--- 训练完成 --- (总耗时: {end_time - start_time:.2f} 秒)")
-
-# 保存模型
-save_path = r"./sign_language_model_v3_tuned.h5"
-model.save(save_path)
-print(f"模型已保存为 '{save_path}'")
-
 
 # ==========================================
-# 4. [新增模块] 训练过程可视化
+# 5. 评估与可视化 (Evaluation & Visualization)
 # ==========================================
 
-def plot_training_history(history, save_name="training_history.png"):
-    """
-    绘制训练集与验证集的 Accuracy 和 Loss 曲线。
-    这是判断模型状态（过拟合/欠拟合）最直观的图表。
-    """
+def plot_history(history):
+    """绘制训练曲线，用于诊断 过拟合/欠拟合"""
     acc = history.history['accuracy']
     val_acc = history.history['val_accuracy']
     loss = history.history['loss']
     val_loss = history.history['val_loss']
-
-    # 找到验证集Loss最低的那个epoch（最佳点）
     best_epoch = np.argmin(val_loss)
-    best_val_loss = val_loss[best_epoch]
-    best_val_acc = val_acc[best_epoch]
-
-    epochs_range = range(len(acc))
 
     plt.figure(figsize=(15, 6))
 
-    # --- 子图 1: 准确率 ---
+    # Accuracy Plot
     plt.subplot(1, 2, 1)
-    plt.plot(epochs_range, acc, label='Training Accuracy')
-    plt.plot(epochs_range, val_acc, label='Validation Accuracy', linestyle='--')
-    # 标记最佳点
-    plt.scatter(best_epoch, best_val_acc, c='red', zorder=5)
-    plt.annotate(f'Best: {best_val_acc:.2%}', (best_epoch, best_val_acc),
-                 xytext=(0, 10), textcoords='offset points', ha='center')
-    plt.legend(loc='lower right')
-    plt.title('Training and Validation Accuracy')
+    plt.plot(acc, label='Train Acc')
+    plt.plot(val_acc, label='Val Acc', linestyle='--')
+    plt.scatter(best_epoch, val_acc[best_epoch], c='red', label='Best Epoch')
+    plt.title('Accuracy Curve')
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
+    plt.legend()
     plt.grid(True, alpha=0.3)
 
-    # --- 子图 2: 损失值 ---
+    # Loss Plot
     plt.subplot(1, 2, 2)
-    plt.plot(epochs_range, loss, label='Training Loss')
-    plt.plot(epochs_range, val_loss, label='Validation Loss', linestyle='--')
-    # 标记最佳点
-    plt.scatter(best_epoch, best_val_loss, c='red', zorder=5)
-    plt.annotate(f'Min Loss: {best_val_loss:.4f}', (best_epoch, best_val_loss),
-                 xytext=(0, 10), textcoords='offset points', ha='center')
-    plt.legend(loc='upper right')
-    plt.title('Training and Validation Loss')
+    plt.plot(loss, label='Train Loss')
+    plt.plot(val_loss, label='Val Loss', linestyle='--')
+    plt.scatter(best_epoch, val_loss[best_epoch], c='red', label='Best Epoch')
+    plt.title('Loss Curve')
     plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.grid(True, alpha=0.3)
+    plt.legend()
 
     plt.tight_layout()
-    plt.savefig(save_name)
-    print(f"[可视化] 训练曲线图已保存: {save_name}")
+    plt.savefig("training_history_dual.png")
     plt.show()
 
 
-# 调用可视化函数
-print("\n--- 正在生成训练过程分析图 ---")
-plot_training_history(history, save_name="training_process_analysis.png")
+plot_history(history)
 
-# ==========================================
-# 5. 最终评估 (混淆矩阵与报告)
-# ==========================================
+print("\n--- 最终测试报告 (Final Evaluation on Validation Set) ---")
+# 预测
+y_pred_probs = model.predict(val_ds)
+y_pred = np.argmax(y_pred_probs, axis=1)
 
-print("\n--- 正在生成详细评估报告 ---")
-# 获取所有真实标签
-y_true = []
-for features, labels in val_ds:
-    y_true.extend(labels.numpy())
-y_true = np.array(y_true)
+# 分类报告
+print(classification_report(val_labels_np, y_pred, target_names=class_names, zero_division=0))
 
-# 获取所有预测标签
-predictions_raw = model.predict(val_ds)
-y_pred = np.argmax(predictions_raw, axis=1)
-
-# 打印分类报告
-print("\n--- Classification Report ---")
-print(classification_report(y_true, y_pred, target_names=class_names, zero_division=0))
-
-# 绘制混淆矩阵
-print("\n--- Confusion Matrix ---")
-cm = confusion_matrix(y_true, y_pred)
-
-plt.figure(figsize=(12, 10))
-sns.heatmap(
-    cm,
-    annot=True,
-    fmt='g',
-    cmap='Blues',
-    xticklabels=class_names,
-    yticklabels=class_names
-)
-plt.xlabel('Predicted Label', fontsize=12)
-plt.ylabel('True Label', fontsize=12)
-plt.title('Confusion Matrix (Final Tuned Model)', fontsize=15)
+# 混淆矩阵可视化
+plt.figure(figsize=(10, 8))
+cm = confusion_matrix(val_labels_np, y_pred)
+sns.heatmap(cm, annot=True, fmt='g', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.title('Confusion Matrix (Dual Stream)')
 plt.show()
