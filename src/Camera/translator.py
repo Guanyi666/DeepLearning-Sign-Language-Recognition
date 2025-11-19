@@ -33,7 +33,7 @@ class SignTranslator:
 
         self.word_buffer = []  # 存储当前的单词序列
         self.last_update_time = 0
-        self.TIMEOUT = 5  # 如果 2.5 秒没有新词，就自动提交翻译
+        self.TIMEOUT = 2.5  # 如果 2.5 秒没有新词，就自动提交翻译
 
     def add_word(self, word):
         """
@@ -70,10 +70,29 @@ class SignTranslator:
         self.word_buffer = []
         return result
 
-    def check_auto_translate(self):
+    def check_auto_submit(self):
         """
-        检查是否超时，如果很久没做动作了，自动结算成句子
+        [修改] 检查是否超时。
+        如果超时，返回【当前积累的所有动作列表】，并清空缓冲区。
         """
+        # 判断是否非空且超时
         if self.word_buffer and (time.time() - self.last_update_time > self.TIMEOUT):
-            return self.translate()
+            # 1. 拷贝一份列表 (因为马上要清空 self.word_buffer)
+            final_sequence = self.word_buffer.copy()
+
+            # 2. 清空缓冲区，准备接收下一句话
+            self.word_buffer = []
+
+            # 3. 返回原始列表，例如 ['you', 'very', 'good']
+            return final_sequence
+
         return None
+
+    def rules_translate(self, sequence_list):
+        """
+        [新增] 纯粹的翻译功能：输入列表 -> 输出中文
+        """
+        gloss_sequence = " ".join(sequence_list)
+        if gloss_sequence in self.rules:
+            return self.rules[gloss_sequence]
+        return gloss_sequence  # 没查到就返回原文

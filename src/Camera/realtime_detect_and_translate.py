@@ -7,7 +7,7 @@ import time
 from collections import Counter
 from translator import SignTranslator  # 导入刚才写的类
 from PIL import Image, ImageDraw, ImageFont
-
+from nlg_processor import NLGProcessor  # 导入刚才新建的模块
 
 
 # ================= 配置区域 =================
@@ -58,7 +58,21 @@ def cv2_add_chinese_text(img, text, position, text_color=(0, 255, 0), text_size=
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
 
+# =========================================================
+# 外部接口：这里处理最终生成的动作列表
+# =========================================================
+def process_final_sequence(action_list):
+    """
+    当用户停止动作 2.5 秒后，这个函数会被自动调用。
+    action_list: 例如 ['morning', 'good']
+    """
+    print(f"\n>>> [外部接口触发] 原始序列: {action_list}")
 
+    # 调用 NLG 处理器进行生成
+    # 输入: ['morning', 'good'] -> 输出: "早上好"
+    final_sentence = nlg_engine.process(action_list)
+
+    return final_sentence
 
 
 
@@ -109,8 +123,10 @@ predictions_queue = []  # 存储最近几帧的预测结果(用于投票)
 sentence = []  # 最终显示的句子
 last_action_time = 0  # 上次动作触发的时间戳
 
-
-translator = SignTranslator() # 初始化翻译器
+# ...
+translator = SignTranslator() # (可选：如果你只用NLG，这个旧翻译器甚至可以删了)
+nlg_engine = NLGProcessor()   # <--- 初始化新的 NLG 处理器
+# ...
 current_sentence = ""         # 用来显示翻译后的中文句子
 cap = cv2.VideoCapture(0)
 
@@ -192,29 +208,40 @@ with mp_hands.Hands(
                         predictions_queue = []  # 清空队列防止连发
 
         # =========================================================
-        # Global Logic: 全局逻辑 (无论有没有手都要运行！)
-        # 注意：这里的缩进退回到了最外层，与 if results... 同级
+        # Global Logic: 全局逻辑
         # =========================================================
 
-        # 1. 检查自动翻译 (超时结算)
-        translated_text = translator.check_auto_translate()
-        if translated_text:
-            current_sentence = translated_text  # 更新中文
-            print(f"翻译结果: {current_sentence}")
-            sentence = []  # 翻译完成后，清空英文流
+        # 1. [修改] 检查是否超时提交
+        # 这里返回的是 原始列表 (Raw List)，例如 ['you', 'good']
+        captured_sequence = translator.check_auto_submit()
 
-        # 2. 界面绘制
+        if captured_sequence:
+            # -----------------------------------------------------
+            # 核心点：列表拿到了！在这里调用你的“其他代码”
+            # -----------------------------------------------------
+            final_result = process_final_sequence(captured_sequence)
+
+            # 更新 UI 显示
+            current_sentence = final_result
+            print(f"处理结果: {current_sentence}")
+
+            # 清空屏幕上的英文流 (因为它已经提交处理了)
+            sentence = []
+
+        # 2. 界面绘制 (保持不变)
         # A. 背景条
         cv2.rectangle(image, (0, 0), (640, 85), (245, 117, 16), -1)
 
-        # B. 英文流
+        # B. 英文流 (实时显示的正在构建的句子)
         text_display = ' + '.join(sentence)
         cv2.putText(image, text_display, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        # C. 中文翻译
+        # C. 中文翻译 (显示上一次处理的结果)
         if current_sentence:
             image = cv2_add_chinese_text(image, f"翻译: {current_sentence}", (10, 40), (255, 255, 0), 30)
+
+        # ... (后续的状态显示和 imshow 不变)
 
         # D. 状态显示
         if time.time() - last_action_time < ACTION_COOLDOWN:
@@ -229,9 +256,6 @@ with mp_hands.Hands(
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
-
-
-
 
 
 cap.release()
