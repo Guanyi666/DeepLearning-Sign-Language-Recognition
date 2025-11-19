@@ -9,34 +9,6 @@ from translator import SignTranslator  # 导入刚才写的类
 from PIL import Image, ImageDraw, ImageFont
 from nlg_processor import NLGProcessor  # 导入刚才新建的模块
 
-from threading import Thread
-
-class WebcamStream:
-    def __init__(self, src=0):
-        self.stream = cv2.VideoCapture(src)
-        (self.grabbed, self.frame) = self.stream.read()
-        self.stopped = False
-
-    def start(self):
-        # 开启线程
-        Thread(target=self.update, args=()).start()
-        return self
-
-    def update(self):
-        # 只要没喊停，就一直读最新的帧
-        while True:
-            if self.stopped:
-                return
-            (self.grabbed, self.frame) = self.stream.read()
-
-    def read(self):
-        # 返回当前最新的帧
-        return self.frame
-
-    def stop(self):
-        self.stopped = True
-        self.stream.release()
-
 
 # ================= 配置区域 =================
 
@@ -103,34 +75,6 @@ def process_final_sequence(action_list):
     return final_sentence
 
 
-# 全局变量
-prev_smoothed_kp = np.zeros(126)
-ALPHA = 0.6  # 平滑系数 (0~1)。越小越平滑(延迟高)，越大越灵敏(抖动大)。0.5-0.7 是个好区间。
-
-
-def extract_keypoints_smoothed(results):
-    global prev_smoothed_kp
-
-    # 1. 先按原逻辑提取当前帧的原始坐标
-    current_kp = np.zeros(126)
-    # ... (这里放入你原本提取 current_kp 的代码) ...
-    if results.multi_hand_landmarks:
-        # ... 你的提取逻辑，算出 current_kp ...
-        pass
-    else:
-        # 如果没手，直接返回全0，并重置平滑器
-        prev_smoothed_kp = np.zeros(126)
-        return np.zeros(126)
-
-    # 2. [核心优化] 应用 EMA 平滑公式
-    # 当前输出 = α * 当前观测 + (1-α) * 上次输出
-    smoothed_kp = (ALPHA * current_kp) + ((1 - ALPHA) * prev_smoothed_kp)
-
-    # 更新历史值
-    prev_smoothed_kp = smoothed_kp
-
-    return smoothed_kp
-
 
 def extract_keypoints(results):
     """特征提取逻辑 (必须保持一致)"""
@@ -193,47 +137,22 @@ translator = SignTranslator() # (可选：如果你只用NLG，这个旧翻译�
 nlg_engine = NLGProcessor()   # <--- 初始化新的 NLG 处理器
 # ...
 current_sentence = ""         # 用来显示翻译后的中文句子
-cap = WebcamStream(src=0).start()
+cap = cv2.VideoCapture(0)
 
 # 开启 MediaPipe
 with mp_hands.Hands(
         model_complexity=0,  # [优化] 0=Lite模型(最快), 1=Full
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as hands:
-    # ... 在 while 循环外 ...
-    frame_count = 0
-    SKIP_FRAMES = 2  # 每隔 2 帧处理一次 (即: 处理1帧，跳过1帧)
-    last_results = None  # 存储上一帧的结果
 
-    while True:
-        frame = cap.read()
-        if frame is None: break
 
-        frame_count += 1
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret: break
 
         # 图像预处理
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # ================= [优化] 跳帧逻辑 =================
-        if frame_count % SKIP_FRAMES == 0:
-            # 只有偶数帧才真正跑 MediaPipe (耗时操作)
-            image.flags.writeable = False
-            results = hands.process(image)
-            image.flags.writeable = True
-            last_results = results  # 缓存结果
-        else:
-            # 奇数帧直接复用上一帧的结果 (极快)
-            results = last_results
-            # 如果上一帧都没有结果，这一帧自然也就没有
-            if results is None:
-                # 创建一个空的伪对象，防止下面报错
-                class Empty: pass
-
-
-                results = Empty()
-                results.multi_hand_landmarks = None
-
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        image.flags.writeable = False
         results = hands.process(image)
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -273,7 +192,7 @@ with mp_hands.Hands(
         # =========================================================
         if results.multi_hand_landmarks:
             # 1. 提取数据
-            keypoints = extract_keypoints_smoothed(results)
+            keypoints = extract_keypoints(results)
             sequence.append(keypoints)
             sequence = sequence[-SEQUENCE_LENGTH:]  # 保持30帧
 
@@ -375,5 +294,5 @@ with mp_hands.Hands(
             break
 
 
-cap.stop()
+cap.release()
 cv2.destroyAllWindows()
