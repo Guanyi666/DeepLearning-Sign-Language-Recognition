@@ -21,24 +21,49 @@ rcParams['font.sans-serif'] = ['SimHei']
 rcParams['axes.unicode_minus'] = False
 
 # ==========================================
+# 0. 超参数集中配置 (Centralized Configuration)
+# ==========================================
+# 在这里修改参数，即可控制整个训练流程和模型结构
+CONFIG = {
+    # --- 数据与路径设置 ---
+    'data_dir': Path(r"../../data/dataset/train_aug"),  # 数据集根目录
+    'val_subjects': ['04'],  # 验证集使用的采集者ID (留一验证)
+
+    # --- 数据预处理参数 ---
+    'batch_size': 64,  # 批次大小：越大训练越快但显存占用高，太小会导致梯度震荡
+    'seq_length': 30,  # 序列长度：输入的时间步长，约对应1秒视频
+    'input_features': 126,  # 特征维度：(21点 * 2只手 * 3维坐标)
+
+    # --- 模型结构参数：动态流 (Branch A) ---
+    'cnn_filters_1': 64,  # 第一层卷积核数量：提取浅层特征
+    'cnn_filters_2': 128,  # 第二层卷积核数量：提取深层特征
+    'lstm_units': 128,  # LSTM 隐藏层单元数：决定记忆容量
+    'dynamic_dropout': 0.4,  # 动态流 Dropout 比率：防止时序特征过拟合
+
+    # --- 模型结构参数：静态流 (Branch B) ---
+    'static_dense_1': 128,  # 静态流第一层全连接单元数
+    'static_dropout': 0.3,  # 静态流 Dropout 比率
+
+    # --- 模型结构参数：融合层 (Fusion) ---
+    'fusion_dense': 128,  # 融合后全连接层单元数
+    'fusion_dropout': 0.5,  # 最终分类前的 Dropout：设高一点因为数据量通常较小
+
+    # --- 训练策略参数 ---
+    'epochs': 500,  # 最大训练轮数
+    'learning_rate': 0.0001,  # 学习率：太大会震荡不收敛，太小收敛极慢
+    'patience': 40  # 早停耐心值：多少轮 Loss 不下降则停止训练
+}
+
+# ==========================================
 # 1. 配置与数据索引 (Configuration & Indexing)
 # ==========================================
 
-# 数据集路径
-DATA_DIR = Path(r"../../data/dataset/train_aug")
-
-# 留一验证策略 (Leave-One-Subject-Out Validation)
-# 目的：评估模型的泛化能力。模型在从未见过的 '04' 号采集者数据上进行测试，
-# 防止模型死记硬背特定人的动作习惯。
-VALIDATION_SUBJECTS = ['04']
-
-# 超参数配置 (Hyperparameters)
-# BATCH_SIZE: 64。权衡内存占用与梯度下降的随机性。
-# SEQ_LENGTH: 30。输入的时间步长，对应约1秒的视频数据。
-# INPUT_FEATURES: 126。每帧特征维度 (21点 * 2只手 * 3维坐标)。
-BATCH_SIZE = 64
-SEQ_LENGTH = 30
-INPUT_FEATURES = 126
+# 从配置中读取核心参数
+DATA_DIR = CONFIG['data_dir']
+VALIDATION_SUBJECTS = CONFIG['val_subjects']
+BATCH_SIZE = CONFIG['batch_size']
+SEQ_LENGTH = CONFIG['seq_length']
+INPUT_FEATURES = CONFIG['input_features']
 
 print(f"--- 系统初始化 ---")
 print(f"数据源: {DATA_DIR}")
@@ -191,18 +216,23 @@ def create_dual_stream_model(input_shape_seq, input_shape_static, num_classes):
     input_seq = layers.Input(shape=input_shape_seq, name='seq_input')
 
     # Feature Extraction (CNN): 提取局部短时特征
-    x = layers.Conv1D(64, 3, padding='same', activation='relu')(input_seq)
+    # 使用配置中的 cnn_filters_1
+    x = layers.Conv1D(CONFIG['cnn_filters_1'], 3, padding='same', activation='relu')(input_seq)
     x = layers.BatchNormalization()(x)  # 抑制梯度消失，加速收敛
     x = layers.MaxPooling1D(2)(x)  # 降维，保留显著特征
 
-    x = layers.Conv1D(128, 3, padding='same', activation='relu')(x)
+    # 使用配置中的 cnn_filters_2
+    x = layers.Conv1D(CONFIG['cnn_filters_2'], 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
 
     # Sequence Modeling (Bi-LSTM): 提取长时依赖
     # Bidirectional 允许模型同时利用过去和未来的信息
     # return_sequences=False: 只输出序列最后的状态，作为整个序列的摘要
-    x = layers.Bidirectional(layers.LSTM(128, return_sequences=False))(x)
-    x = layers.Dropout(0.4)(x)  # 正则化，防止过拟合
+    # 使用配置中的 lstm_units
+    x = layers.Bidirectional(layers.LSTM(CONFIG['lstm_units'], return_sequences=False))(x)
+
+    # 使用配置中的 dynamic_dropout
+    x = layers.Dropout(CONFIG['dynamic_dropout'])(x)  # 正则化，防止过拟合
 
     dynamic_features = layers.Dense(64, activation='relu')(x)
 
@@ -213,9 +243,11 @@ def create_dual_stream_model(input_shape_seq, input_shape_static, num_classes):
     input_static = layers.Input(shape=input_shape_static, name='static_input')
 
     # Pose Encoding (MLP): 将坐标映射到高维语义空间
-    y = layers.Dense(128, activation='relu')(input_static)
+    # 使用配置中的 static_dense_1
+    y = layers.Dense(CONFIG['static_dense_1'], activation='relu')(input_static)
     y = layers.BatchNormalization()(y)
-    y = layers.Dropout(0.3)(y)
+    # 使用配置中的 static_dropout
+    y = layers.Dropout(CONFIG['static_dropout'])(y)
 
     y = layers.Dense(64, activation='relu')(y)
     y = layers.BatchNormalization()(y)
@@ -229,8 +261,10 @@ def create_dual_stream_model(input_shape_seq, input_shape_static, num_classes):
     combined = layers.concatenate([dynamic_features, static_features])
 
     # Classification Head
-    z = layers.Dense(128, activation='relu')(combined)
-    z = layers.Dropout(0.5)(z)  # High Dropout due to small dataset size
+    # 使用配置中的 fusion_dense
+    z = layers.Dense(CONFIG['fusion_dense'], activation='relu')(combined)
+    # 使用配置中的 fusion_dropout
+    z = layers.Dropout(CONFIG['fusion_dropout'])(z)  # High Dropout due to small dataset size
     output = layers.Dense(num_classes, activation='softmax')(z)
 
     model = keras.Model(inputs=[input_seq, input_static], outputs=output, name="TwoStream_SignNet")
@@ -245,10 +279,10 @@ model.summary()
 # 4. 训练与回调策略 (Training & Callbacks)
 # ==========================================
 
-EPOCHS = 500
-# 学习率设置 (0.0001): 较小的学习率有助于在复杂的多模态损失面上找到更优的极小值，
+EPOCHS = CONFIG['epochs']
+# 学习率设置: 较小的学习率有助于在复杂的多模态损失面上找到更优的极小值，
 # 虽然收敛较慢，但能减少震荡。
-LEARNING_RATE = 0.0001
+LEARNING_RATE = CONFIG['learning_rate']
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
@@ -257,9 +291,9 @@ model.compile(
 )
 
 callbacks_list = [
-    # 早停机制: 防止过拟合。如果验证集 Loss 在 40 轮内没有下降，则停止。
+    # 早停机制: 防止过拟合。如果验证集 Loss 在 Patience 轮内没有下降，则停止。
     # restore_best_weights=True 确保模型回滚到性能最好的状态，而不是最后的状态。
-    EarlyStopping(monitor='val_loss', patience=40, restore_best_weights=True, verbose=1),
+    EarlyStopping(monitor='val_loss', patience=CONFIG['patience'], restore_best_weights=True, verbose=1),
 
     # 模型检查点: 始终保存验证集 Loss 最低的模型版本。
     ModelCheckpoint("./sign_language_model_dual.h5", monitor='val_loss', save_best_only=True, verbose=0)
