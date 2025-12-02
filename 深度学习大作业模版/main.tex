@@ -1,29 +1,140 @@
-\documentclass[11pt, a4paper]{article}
-% 使用ctexart包支持中文排版和标准结构
-\usepackage[UTF8]{ctex}
-\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=3cm]{geometry}
+% 完整编译: XeLaTex -> BibTex -> XeLaTex -> XeLaTex
+
+%%%%%%%%%%%%%%%%%%%%%%%%  文档配置  %%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[report, twoside, UTF8, AutoFakeBold = 1, AutoFakeSlant, zihao = -4]{config}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{graphicx}
-\usepackage{hyperref}
 \usepackage{booktabs} % 用于绘制三线表
 \usepackage{multirow} % 用于表格多行合并
 \usepackage{float}
 
+% 封面图片定义 (请确保 images 文件夹下有这些 logo)
+\def \titlePageImages{
+    \includegraphics[width=0.15\textwidth] {NWPU-logo.pdf}\\ % 校徽
+    \includegraphics[width=0.25\textwidth] {NWPU-title-CN.pdf}\\ % 中文校名
+    \includegraphics[width=0.25\textwidth] {NWPU-title-EN.pdf}\\ % 英文校名
+}
+
+% 文档信息定义 (根据 guide.tex 保留的信息)
+\def \majorTitle   {深度学习课程设计} % 大标题
+\def \minorTitleCN {基于双流 CNN-LSTM 融合网络的手语识别} % 中文标题
+\def \minorTitleEN {Sign Language Recognition Based on Dual-Stream CNN-LSTM} % 英文标题 (可按需修改)
+\def \currentDate  {\zhtoday} % 日期
+
+\def \classificationNumber  {A0001} % 分类号
+\def \UDC                   {} % UDC
+\def \confidentialLevel     {公开} % 密级
+\def \serialNumber          {0001} % 编号
+
+% 个人信息定义
+\def \titlePageInfoBox{
+    % 参数：#1下划线长度 #2字号 #3标题 #4内容
+    \infobox{6cm}{-2}{学~~~~~~~~院}{软件学院}\\
+    \infobox{6cm}{-2}{专~~~~~~~~业}{软件工程}\\
+    \infobox{6cm}{-2}{组~~~~~~~~名}{第7组}\\
+    \infobox{6cm}{-2}{姓~~~~~~~~名}{朱靖轩(组长)}\\
+    \infobox{6cm}{-2}{学~~~~~~~~号}{2023303017}\\
+    \infobox{6cm}{-2}{指导教师}{徐韬}\\
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%  文档开始  %%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
-\section{数据集获取与预处理}
+% 封面
+\CoverPage{empty}{1}{2}{-2}
 
-\subsection{任务背景与数据集构建动机}
+%%%%%%%%%%%%%%%%%%%%%  正文前页眉页脚  %%%%%%%%%%%%%%%%%%%%%%
+
+% 页眉
+\Header
+    {common}
+    {1pt}{1pt}{0.5pt}
+    {}{\includegraphics[width=0.15\textwidth]{NWPU-title-CN.pdf}}{}
+
+% 页脚
+\Footer
+    {common}
+    {0pt}{0pt}{0pt}
+    {}{\thepage}{}
+
+% 页数样式
+\SetRomanPageNumber{1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%  摘要  %%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{abstractCN}[-2]
+    % [待补充：此处填写中文摘要]
+    本文旨在解决中国手语识别中的动态时序建模问题。针对现有数据集背景单一、缺乏针对性的问题，构建了基于日常核心词汇的自建数据集。文中详细阐述了基于 MediaPipe 的手部关键点提取流程，设计了基于能量阈值的自适应动作分割算法，并提出了包含时间拉伸、高斯扰动等策略的时空数据增强方案。后续将基于双流 CNN-LSTM 网络验证该数据集及预处理方案的有效性。
+
+    \def\keywordsCN{手语识别，CNN-LSTM，MediaPipe，数据增强，深度学习}
+\end{abstractCN}
+
+\begin{abstractEN}[-2]
+    % [待补充：此处填写英文摘要]
+    This paper aims to address the dynamic temporal modeling problem in Chinese Sign Language (CSL) recognition. To overcome the limitations of existing datasets, such as simple backgrounds and lack of specificity, a self-built dataset based on daily core vocabularies is constructed. The paper details the hand keypoint extraction pipeline based on MediaPipe, designs an adaptive action segmentation algorithm based on energy thresholds, and proposes a spatio-temporal data augmentation scheme including time warping and Gaussian jittering. Future work will verify the effectiveness of the dataset and preprocessing scheme based on the dual-stream CNN-LSTM network.
+
+    \def\keywordsEN{Sign Language Recognition, CNN-LSTM, MediaPipe, Data Augmentation, Deep Learning}
+\end{abstractEN}
+
+%%%%%%%%%%%%%%%%%%%%%%%  目录  %%%%%%%%%%%%%%%%%%%%%%%%
+
+\contentPage{1.5}{目~~~~录}
+\contentpageOfFigures{1.5}{图目录}
+\contentpageOfTables{1.5}{表目录}
+
+%%%%%%%%%%%%%%%%%%%%%%%  启用水印  %%%%%%%%%%%%%%%%%%%%%%%%
+
+\imageWatermark{0}{0.8}{0.02}{NWPU-logo.eps}
+
+%%%%%%%%%%%%%%%%%%%%%  正文页眉页脚  %%%%%%%%%%%%%%%%%%%%%%
+
+% 页眉
+\Header
+    {common}
+    {1pt}{1pt}{0.5pt}
+    {深度学习课程设计}{}{\currentChapterInfo}
+
+% 页脚
+\Footer
+    {common}
+    {0pt}{0pt}{0pt}
+    {}{\thepage}{}
+
+% 页数样式
+\SetArabicPageNumber{1}
+
+%%%%%%%%%%%%%%%%%%%%%%%  正文章节  %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 第一章：引言（模板占位符）
+\chapter{引言}
+\section{研究背景与意义}
+[待补充：介绍手语识别的社会意义，以及深度学习在该领域的应用现状...]
+
+\section{国内外研究现状}
+[待补充：分析 CNN、LSTM、Transformer 等模型在 SLR 领域的应用...]
+
+\section{本文主要工作}
+[待补充：简述本文的创新点和主要贡献...]
+
+% =========================================================
+% 第二章：数据集与预处理 (来自原 main.tex 的内容)
+% 注意：原 section 提升为 chapter，subsection 提升为 section
+% =========================================================
+
+\chapter{数据集获取与预处理}
+
+\section{任务背景与数据集构建动机}
 在计算机视觉领域，\textbf{手语识别（Sign Language Recognition, SLR）}与传统的\textbf{手势识别（Gesture Recognition）}存在本质区别。手势识别通常关注静态的手部姿态（如“握拳”、“V手势”）或简单的短时指令，往往缺乏语言学属性。而手语是一门完备的视觉语言，具有复杂的语法结构、丰富的词汇语义以及长时序的动态演变特性。一个完整的手语动作不仅依赖于手型，还高度依赖于手部的运动轨迹、空间位置变化以及双手间的协同配合。
 
 尽管目前存在如NVGesture、EgoGesture等手势数据集，但针对\textbf{中国手语（Chinese Sign Language, CSL）}的高质量公开数据集相对稀缺。现有的CSL数据集大多采集于受控的实验室环境，背景单一且缺乏多样性的光照和视角变化，难以满足模型在真实场景下的泛化需求。此外，针对特定课程任务的小样本词汇训练集更是空白。
 
 鉴于此，为了构建一个既符合中国手语语言习惯，又具有一定鲁棒性的验证基准，本研究决定自主搭建手语视频采集系统，构建专用的手语数据集。这不仅能够保证数据的针对性，也为后续验证双流CNN-LSTM融合网络在动态时序建模上的有效性提供了数据基础。
 
-\subsection{数据集的采集与分布}
+\section{数据集的采集与分布}
 \label{sec:dataset_selection}
 本项目依据《中国手语》标准词汇，选取了日常交流中频率最高的6个核心词汇作为识别对象，分别为“好”、“他”、“早上”、“谢谢”、“很”和“你”。
 
@@ -42,11 +153,11 @@
     \end{tabular}
 \end{table}
 
-\subsection{基于 MediaPipe 的动态特征提取}
+\section{基于 MediaPipe 的动态特征提取}
 \label{sec:feature_extraction}
 为了从冗余的视频像素中提取紧凑且富有判别力的语义信息，本研究设计了基于骨骼关键点的特征提取流水线。
 
-\subsubsection{手部关键点提取与空间拓扑构建}
+\subsection{手部关键点提取与空间拓扑构建}
 我们利用 \textbf{MediaPipe Hands} 框架对视频序列进行逐帧解析。相较于传统的OpenPose，MediaPipe在移动端和轻量级设备上具有更高的推理效率。
 \begin{enumerate}
     \item \textbf{检测配置：} 设置 \texttt{max\_num\_hands=2} 以支持双手交互动作的捕捉，并关闭 \texttt{static\_image\_mode}（设为 False），利用上一帧的检测结果指导当前帧的追踪，从而显著减少抖动并提高时序连贯性。
@@ -54,19 +165,19 @@
 \end{enumerate}
 为了显式地建模手部物理结构，我们基于生物学解剖特征，定义了一个 $21 \times 21$ 的邻接矩阵 $\mathbf{A}$，描述了手腕到指尖的 20 条骨骼连接。这为后续基于图结构的特征分析奠定了拓扑基础。
 
-\subsubsection{基于能量阈值的自适应动作分割}
+\subsection{基于能量阈值的自适应动作分割}
 原始录制视频通常包含动作前后的预备动作（Pre-stroke）和撤回动作（Post-stroke），以及动作中间的自然停顿。为了精确截取语义动作段，我们提出了一种\textbf{基于运动能量且具备停顿容忍度（Pause-Tolerant）}的自动分割算法。
 
 算法核心步骤如下：
 \begin{enumerate}
     \item \textbf{瞬时能量计算：} 定义第 $t$ 帧的运动能量 $E_t$ 为双手所有关键点相对于上一帧的位移向量的 $L_2$ 范数之和：
     \begin{equation}
-        E_t = \sum_{h \in \{L, R\}} \sum_{i=1}^{21} \| \mathbf{p}_{h,i}^{(t)} - \mathbf{p}_{h,i}^{(t-1)} \|_2^2
+        E_t = \sum_{h \in \{L, R\}} \sum_{i=1}^{21} \|\mathbf{p}_{h,i}^{(t)} - \mathbf{p}_{h,i}^{(t-1)} \|_2^2
     \end{equation}
     其中 $\mathbf{p}_{h,i}^{(t)}$ 表示第 $t$ 帧第 $h$ 只手第 $i$ 个关键点的坐标。
-    
+
     \item \textbf{能量平滑：} 为消除检测噪声引起的能量抖动，对 $E_t$ 序列进行窗口大小为 3 的移动平均平滑。
-    
+
     \item \textbf{自适应边界判定：} 设定自适应阈值 $\tau = 0.5 \cdot \text{mean}(E) + \epsilon$。
     \begin{itemize}
         \item 当 $E_t > \tau$ 时，判定动作开始。
@@ -75,24 +186,24 @@
 \end{enumerate}
 这一机制有效解决了复杂手语动作中因短暂亦扬顿挫而被错误切分为多个片段的问题。
 
-\subsubsection{时序统计特征向量构建}
+\subsection{时序统计特征向量构建}
 为了降低计算复杂度并保留动作的统计分布特性，我们将原始的 $21 \times 3$ 坐标点压缩为高层的统计特征。对于每一个动作区间，逐帧提取 12 维特征向量 $V_t$：
 \begin{equation}
     V_t = [\mu_L, \sigma_L^2, \mu_R, \sigma_R^2]^\top \in \mathbb{R}^{12}
 \end{equation}
 其中 $\mu \in \mathbb{R}^3$ 和 $\sigma^2 \in \mathbb{R}^3$ 分别代表手部关键点群在 $x, y, z$ 轴上的均值和方差。均值特征反映了手部在画面中的\textbf{绝对位置}轨迹，而方差特征则隐含了手势的\textbf{张开程度和形态变化}信息。
 
-\subsection{时序规范化与多策略数据增强}
+\section{时序规范化与多策略数据增强}
 \label{sec:data_augmentation}
 
-\subsubsection{时序归一化}
+\subsection{时序归一化}
 由于不同志愿者打手语的语速存在差异，导致提取出的动作序列长度不一。为满足神经网络固定输入维度的要求，本研究采用\textbf{重采样技术}将所有样本的时序长度统一为 $T=30$ 帧。
 \begin{itemize}
     \item 对于短序列（$L < 30$），采用\textbf{末帧填充（Padding）}策略，保持动作语义的完整性。
     \item 对于长序列（$L > 30$），采用\textbf{线性插值采样}，保证关键动作帧不丢失。
 \end{itemize}
 
-\subsubsection{时空数据增强机制}
+\subsection{时空数据增强机制}
 深度学习模型的性能高度依赖于数据的规模与多样性。考虑到自建数据集仅有318个样本，极易导致模型过拟合。因此，本研究设计了一套包含四种变换策略的\textbf{时空数据增强（Spatio-Temporal Augmentation）}方案，旨在模拟真实应用场景中的各种干扰因素。通过不同随机种子的组合，将数据集扩充至 \textbf{2862} 条（扩增倍数 $9\times$）。具体增强方法如下：
 
 \paragraph{1. 时间拉伸与压缩 (Time Warping)}
@@ -111,11 +222,11 @@
 \paragraph{4. 空间旋转变换 (Spatial Rotation)}
 模拟摄像头拍摄角度的偏差或用户手掌朝向的多样性。构建二维旋转矩阵 $R(\theta)$ 对手部 $x, y$ 坐标特征进行变换：
 \begin{equation}
-    \begin{bmatrix} x' \\ y' \end{bmatrix} = 
-    \begin{bmatrix} 
-    \cos\theta & -\sin\theta \\ 
-    \sin\theta & \cos\theta 
-    \end{bmatrix} 
+    \begin{bmatrix} x' \\ y' \end{bmatrix} =
+    \begin{bmatrix}
+    \cos\theta & -\sin\theta \\
+    \sin\theta & \cos\theta
+    \end{bmatrix}
     \begin{bmatrix} x \\ y \end{bmatrix}
 \end{equation}
 其中旋转角度 $\theta$ 在一定范围内随机采样（如 $[-15^\circ, 15^\circ]$）。这极大地提升了模型对视角变化的泛化能力。
@@ -132,7 +243,8 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{images/image}
+    \includegraphics[width=1\linewidth]{images/image} % 请确保有此图片或替换为占位符
+
     \caption{手语关键点数据增强效果对比(右手食指指尖X坐标轨迹)}
     \label{fig:placeholder}
 \end{figure}
@@ -140,5 +252,170 @@
 通过这些增强方式，最终得到的轨迹在保持动作语义不变的前提下显著增加了样本的多样性，有助于模型提升对实际复杂场景中手语动作的泛化能力。
 
 综上所述，通过上述严谨的数据采集、精细的特征工程以及全面的数据增强，我们构建了一个高质量、抗干扰能力强的手语数据集，为后续模型的训练奠定了坚实基础。
+
+% =========================================================
+% 第三章：方法 (模板占位符)
+% =========================================================
+
+\chapter{双流 CNN-LSTM 融合网络设计}
+
+\section{网络总体架构}
+[待补充：双流网络（RGB流 + 骨骼流）的整体结构图示与描述...]
+
+\section{空间特征提取模块 (CNN)}
+[待补充：CNN 分支的设计，如何处理每一帧的图像特征...]
+
+\section{时序建模模块 (LSTM)}
+[待补充：LSTM 单元的结构，如何捕捉长时序依赖...]
+
+\section{融合策略与分类层}
+[待补充：特征融合方式（Concat/Sum/Attention）以及 Softmax 分类...]
+
+% =========================================================
+% 第四章：实验与分析 (模板占位符)
+% =========================================================
+
+\chapter{实验结果与分析}
+
+\section{实验环境与参数设置}
+[待补充：硬件配置、训练超参数、优化器选择...]
+
+\section{评价指标}
+[待补充：Accuracy, Precision, Recall, Confusion Matrix...]
+
+\section{消融实验}
+[待补充：对比单流与双流、不同数据增强策略对结果的影响...]
+
+\chapter{总结与展望}
+\section{总结}
+\section{展望}
+
+% =========================================================
+% 第五章：模糊语义识别与自然语言后处理
+% =========================================================
+
+\chapter{模糊语义识别与自然语言后处理}
+\label{sec:semantic_processing}
+
+手语作为一种视觉-空间语言，其自然表达具有高度的\textbf{非线性（Non-linearity）}、\textbf{协同发音（Co-articulation）}和\textbf{冗余容错}特性。这导致基于深度学习模型的孤立手语识别（Isolated Sign Language Recognition）模块通常只能输出离散的、逐词的识别结果。面对实际应用中的手势重复、顺序颠倒以及手语词汇间的语义交错，传统的“硬识别 + 直接拼接”流程无法生成自然、流畅且符合语境的中文语句。
+
+为解决这一核心问题，本研究提出了一套\textbf{基于语义组合规则（Semantic Combination Rules）}的模糊语义识别与后处理机制，其目标是将噪声序列转化为高置信度的、符合中文表达习惯的自然语句。
+
+\subsection{总体架构与模糊性挑战}
+
+本系统的模糊语义识别模块采用严格的三阶段流水线设计，确保从离散词汇到自然语句的逻辑严谨性：
+
+\begin{enumerate}
+    \item \textbf{序列预处理：} 关键语义元素提取与冗余去除。
+    \item \textbf{语义上下文构建：} 将词汇序列转化为结构化语义特征。
+    \item \textbf{规则驱动的生成与校准：} 基于语义组合规则和对话语境，生成表达并校准置信度。
+\end{enumerate}
+系统的核心挑战在于处理由手势识别不确定性带来的\textbf{模糊性（Fuzziness）}，即词汇多义、序列无序，以及如何基于这些不确定性特征，推理出清晰的复合意图（Composite Intent）。
+
+\subsection{序列预处理与语义保留去冗余}
+\label{sec:preprocessing}
+
+手语在连续表达中易出现词汇的重复（如强调）或混淆。我们设计的\texttt{preprocess\_gesture\_sequence}函数，通过\textbf{语义保留去重}策略，在保证信息完整性的前提下精简序列。
+
+\subsubsection{词汇映射与标准化}
+在预处理之前，系统首先对模型输出的原始词汇进行标准化映射，这是处理语义模糊性的第一步。例如，将手语识别模型输出的“她”映射为统一的“他”进行语义分析，并对“谢谢”进行标准化以识别其核心功能。
+
+\begin{table}[H]
+    \centering
+    \caption{核心手语词汇与标准化映射及语义功能}
+    \label{tab:word_mapping}
+    \begin{tabular}{cccc}
+        \toprule
+        \textbf{手语词汇} & \textbf{标准化语义} & \textbf{语义功能} & \textbf{功能分类} \\
+        \midrule
+        谢谢 & 感谢 & gratitude & 感谢词 \\
+        很 & 程度 & degree & 程度词 \\
+        早上 & 早上 & time & 时间词 \\
+        你, 我, 他, 她 & 你, 我, 他, 他 & pronoun / reference & 人称/指代词 \\
+        好 & 好 & state & 状态词 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{优先级去重与语义重排序}
+为了避免简单的去重操作（如\texttt{set()}）可能导致的语义损失，我们采用基于优先级的筛选机制：
+\begin{enumerate}
+    \item \textbf{关键语义保留：} 对具有明确意图指向的词汇（如“早上”、“谢谢”），无论其在原始序列中出现多少次，仅保留一个，以消除识别冗余，确保意图的纯粹性。
+    \item \textbf{人称代词筛选：} 当手势序列包含多个人称代词（如`['你', '我']`）时，系统采用预定义的语言学优先级进行选择。根据中文对话习惯，代词优先级设置为：\textbf{“我” > “你” > “他/她”}。系统仅保留优先级最高的代词，以明确句子的主语或宾语。
+    \item \textbf{语义重排序：} 预处理后的精简词汇集合，将根据中文的自然表达习惯进行重排序。例如，将时间修饰词（“早上”）置于句首，将感谢词（“谢谢”）置于问候词之前，以形成规范化的语义输入序列，为后续的规则匹配提供可信赖的基础。
+\end{enumerate}
+
+\subsection{语义上下文提取与意图推理}
+\label{sec:context_extraction}
+
+\texttt{extract\_semantic\_context}函数负责将预处理后的词汇序列 $S'$ 转化为结构化的\textbf{最小必要语义表示} $C$。这种表示方法是意图推理的关键。上下文 $C$ 是一个包含语义槽（Slot）的字典，例如 $C = \{S_1: V_1, S_2: V_2, \dots\}$。
+
+\subsubsection{语义槽的构建}
+系统通过遍历 $S'$，填充以下核心语义槽：
+\begin{itemize}
+    \item $C[\text{"pronoun"}]$：确定的主导人称代词（如 $\text{"你"}$）。
+    \item $C[\text{"time"}]$：时间维度信息（如 $\text{"早上"}$）。
+    \item $C[\text{"gratitude"}]$：布尔值或词汇，表示感谢意图的存在。
+    \item $C[\text{"state"}]$：状态词汇及其修饰信息（如 $\{"base": \text{"好"}, "intensity": 1\}$）。
+\end{itemize}
+
+\subsubsection{隐式语义推理}
+此阶段尤其重要的是对\textbf{隐式语义（Implicit Semantics）}的推理。例如，在中文问候中，时间词往往隐含了“好”这一状态：
+\begin{itemize}
+    \item 如果 $C[\text{"time"}] = \text{"早上"}$ 且 $C[\text{"state"}]$ 为空，系统将根据中文习惯，隐式设置 $C[\text{"is\_greeting"}] = \text{True}$，并推断 $\text{"state"} = \text{"好"}$，以确保生成“早上好”而非仅“早上”。
+\end{itemize}
+通过这种结构化表示，无论原始手语序列的词序如何混乱，语义组合的核心要素都能被准确提取。
+
+\subsection{基于规则的自然语言生成与置信度校准}
+\label{sec:rule_generation}
+
+自然语言生成（NLG）阶段采用一套\textbf{启发式语义组合规则集合} $\mathcal{R}$，实现从结构化语义 $C$ 到最终自然语句 $\text{Exp}$ 的映射。
+
+\subsubsection{高优先级语义组合规则 ($\mathcal{R}$)}
+每条规则 $r \in \mathcal{R}$ 都是一个三元组 $(P_r, G_r, \Delta \text{Conf}_r)$：
+\begin{itemize}
+    \item $P_r$: 规则条件，是基于上下文 $C$ 的逻辑判断（使用 $\lambda$ 函数实现），其逻辑判断的复杂度体现了对模糊语义的捕捉能力，如判断 $(C[\text{"time"}] \land C[\text{"gratitude"}] \land \neg C[\text{"pronoun"}])$。
+    \item $G_r$: 生成函数，根据匹配的语义槽生成精确的中文语句。
+    \item $\Delta \text{Conf}_r$: 置信度加成值，用于体现该组合意图的强弱。强组合（如“早上好，谢谢你”）被赋予较高的 $\Delta \text{Conf}_r$，以保证在竞争规则中获得最高的优先级。
+\end{itemize}
+系统首先匹配具有最高 $\Delta \text{Conf}_r$ 的规则，若匹配成功，则以此规则生成基础表达。
+
+\subsubsection{对话语境与自然语言增强}
+为了使生成的语句具有对话连贯性和情感色彩，系统引入了两个动态增强机制：
+\begin{itemize}
+    \item \textbf{语境适配模板：} 系统维护一组针对不同对话场景（如 `first\_greeting`、`response\_to\_thanks`、`formal\_setting`）的语境模板。在生成语句后，系统有概率（例如 $20\%$）使用当前语境下的预设模板进行替换或补充，确保生成的语句符合当前的对话流程，而非孤立的翻译。
+    \item \textbf{情感修饰与敬语：} 在语句末尾随机添加语气词（如“呀”、“呢”），或在正式场景（`formal\_setting`）下将人称代词“你”替换为“您”，以实现语言的自然性和情感的丰富性。
+\end{itemize}
+
+\subsubsection{双重验证与置信度校准}
+最终的输出表达式 $(\text{Exp}, \text{Conf})$ 采用双重验证机制，结合了规则驱动的置信度和深度学习模型意图分类的置信度。
+$$
+\text{Conf}_{\text{final}} = \frac{1}{2} \left( (\text{Conf}_{\text{base}} + \Delta \text{Conf}_r) + \text{Conf}_{\text{model}} \right)
+$$
+其中，$\text{Conf}_{\text{base}}$ 为初始基础置信度（如 $0.7$）：
+\begin{itemize}
+    \item \textbf{规则置信度：} $\text{Conf}_{\text{base}} + \Delta \text{Conf}_r$ 构成了基于语义逻辑的置信度，它反映了规则对当前序列的拟合程度。
+    \item \textbf{模型置信度：} $\text{Conf}_{\text{model}}$ 是由轻量级意图分类模型（如 $GlobalAveragePooling1D$ + $Dense$）对预处理后序列预测出的意图概率。
+\end{itemize}
+当规则置信度与模型置信度都较高时，系统采取平均值增强最终置信度，提高了表达的可靠性。只有当 $\text{Conf}_{\text{final}}$ 超过预设的模糊阈值（例如 $0.4$）时，系统才确认表达的有效性并输出结果，否则执行\texttt{fallback\_generation}或返回“无法识别”，从而确保了系统在不确定情况下的稳健性。
+
+\subsection{本章小结}
+本章针对手语识别任务中普遍存在的“孤立词拼接”与“自然语言表达”之间的语义鸿沟，提出并实现了一套完整的模糊语义识别与后处理框架。
+
+该框架创新性地将手语识别输出视为一种具有高模糊性的视觉词汇序列，通过三阶段流水线——\textbf{语义保留的序列预处理}、\textbf{结构化的隐式意图推理}、以及\textbf{基于启发式规则与深度学习双重校验的自然语言生成}——有效地解决了手语表达中的冗余、无序及多义性问题。
+
+特别是，本研究引入的\textbf{双重置信度校准机制}，在保证规则生成的语言学规范性的同时，利用数据驱动的模型概率进行验证，显著降低了误识别风险。这一机制不仅提升了系统输出语句的通顺度与逻辑性，更赋予了机器理解对话语境与情感色彩的能力，实现了从“信号感知”向“语义认知”的关键跨越，为构建真正实用化、人性化的手语交互系统提供了坚实的技术支撑。
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%  参考文献  %%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{references}
+    \bibliography{references.bib} % 请确保目录下有 references.bib 文件
+\end{references}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%  致谢  %%%%%%%%%%%%%%%%%%%%%%%%%
+
+\StartAcknowledgements
+感谢指导老师徐韬的悉心指导，以及第7组全体成员的共同努力。
 
 \end{document}
