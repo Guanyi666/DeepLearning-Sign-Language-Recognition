@@ -65,8 +65,8 @@
 \setCJKsansfont[Path=fonts/,BoldFont={SourceHanSansCN-Bold.otf}] % 无衬线中文字体
 {SourceHanSansCN-Regular.otf}
 
-% 使用Windows系统自带黑体，无需任何文件
-\setCJKmonofont{SimHei}
+\setCJKmonofont{Noto Sans Mono CJK HK} % 等宽中文字体
+
 % 字族
 \setCJKfamilyfont{song}[Path=fonts/,BoldFont={SourceHanSerifCN-Bold.otf}]{SourceHanSerifCN-Regular.otf}
 \newcommand{\songti}{\CJKfamily{song}} % 宋体
