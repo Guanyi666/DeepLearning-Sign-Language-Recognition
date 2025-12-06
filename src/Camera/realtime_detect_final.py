@@ -58,7 +58,7 @@ actions = ['good', 'he', 'morning', 'thank_you', 'very', 'you']
 SEQUENCE_LENGTH = 30
 CONFIDENCE_THRESHOLD = 0.5  # 稍微降低阈值
 STABILITY_FRAMES = 5  # 降低防抖帧数，提升响应速度
-ACTION_COOLDOWN = 1.5
+ACTION_COOLDOWN = 1
 
 # 优化参数
 SKIP_FRAMES = 2  # 每隔 2 帧处理一次 MediaPipe (提速)
