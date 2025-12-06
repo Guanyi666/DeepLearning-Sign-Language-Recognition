@@ -33,7 +33,7 @@ Pillow (用于在视频流中绘制中文)
 
 运行realtime_detect_final.py：
 
-python src1/Camera/realtime_detect_final.py
+python src/Camera/realtime_detect_final.py
 
 
 操作说明：
@@ -54,7 +54,7 @@ python src1/Camera/realtime_detect_final.py
 
 运行run.py：
 
-python src1/Conv1D/run.py
+python src/Conv1D/run.py
 
 
 输出：训练好的模型将保存在 src1/Conv1D/ 目录下（如 sign_language_model_dual.h5），并生成训练过程的 Loss/Accuracy 曲线图。
@@ -67,6 +67,6 @@ python src1/Conv1D/run.py
 
 运行process_repeat_action_video.py：
 
-python src1/process_video/process_repeat_action_video.py
+python src/process_video/process_repeat_action_video.py
 
 
